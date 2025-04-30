@@ -1,0 +1,96 @@
+PREFIX cdm:<http://publications.europa.eu/ontology/cdm#>
+PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
+PREFIX dc:<http://purl.org/dc/elements/1.1/>
+PREFIX xsd:<http://www.w3.org/2001/XMLSchema#>
+PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:<http://www.w3.org/2002/07/owl#>
+
+SELECT 
+DISTINCT
+(GROUP_CONCAT(distinct ?work;separator="|") as ?cellarURIs)
+(GROUP_CONCAT(distinct ?langIdentifier;separator="|") as ?lang)
+(GROUP_CONCAT(distinct ?mtype;separator="|") as ?mtypes)
+(GROUP_CONCAT(distinct ?resType;separator="|") as ?workTypes)
+(GROUP_CONCAT(distinct ?subjectLabel;separator="|") as ?subjects)
+(GROUP_CONCAT(distinct ?subject;separator="|") as ?subject_ids)
+(GROUP_CONCAT(distinct ?mtype;separator="|") as ?file_types)
+
+WHERE 
+{
+	graph ?g {
+		#?work rdf:type cdm:legislation_secondary .
+		?work rdf:type ?resType .
+		VALUES ?resType {
+			cdm:treaty
+			cdm:regulation
+			cdm:regulation_implementing
+			cdm:decision
+			cdm:decision_implementing
+			cdm:agreement_international
+			cdm:act_preparatory
+		}
+		# FILTER(
+			# ?resType = cdm:treaty ||
+			# ?resType = cdm:regulation # ||
+			# ?resType = cdm:regulation_implementing ||
+			# ?resType = cdm:decision ||
+			# ?resType = cdm:decision_implementing ||
+			# ?resType = cdm:agreement_international ||
+			# ?resType = cdm:act_preparatory
+
+			# ?resType = cdm:act_preparatory 
+			# || ?resType = cdm:decision_delegated 
+			# || ?resType = cdm:decision_implementing 
+			# || ?resType = cdm:decision 
+			# || ?resType = cdm:directive 
+			# || ?resType = cdm:guideline_ecb 
+			# || ?resType = cdm:regulation_delegated 
+			# || ?resType = cdm:regulation_implementing 
+			# || ?resType = cdm:regulation 
+		# )
+		?work cdm:work_date_document ?date .
+		FILTER ( ?date >= "decade0-01-01"^^xsd:date && ?date < "decade1-01-01"^^xsd:date) .
+		?work cdm:work_is_about_concept_eurovoc ?subject . 
+		graph ?ga { 
+			?subject skos:prefLabel ?subjectLabel .
+			?scheme skos:notation ?schemeNotation .
+			?subject skos:inScheme ?scheme .
+			FILTER (lang(?subjectLabel)="en") 
+		}
+		VALUES ?schemeNotation {
+			"1216" # criminal law
+			"1236" # rights and freedoms
+			"2806" # family
+			"2811" # migration
+			"2816" # demography and population
+			"2821" # social framework
+			"2826" # social affairs
+			"2831" # culture and religion
+			"2836" # social protection
+			"2841" # health
+			"4416" # organisation of work and working conditions
+			"5206" # environmental policy
+		}
+	}
+	graph ?ge { 
+		?exp cdm:expression_belongs_to_work ?work .
+		?exp cdm:expression_uses_language ?lg . 
+		graph ?lgc { ?lg dc:identifier ?langIdentifier .}
+		FILTER(  str( ?langIdentifier)="ENG")
+	}
+	graph ?gm {
+		?manif cdm:manifestation_manifests_expression ?exp .
+		{?manif cdm:manifestation_type ?mtype .}
+		FILTER(  str( ?mtype)="html"
+				|| str( ?mtype)="html_simpl"
+				|| str( ?mtype)="txt"
+				|| str( ?mtype)="xhtml"
+				|| str( ?mtype)="xhtml_simpl"
+				|| str( ?mtype)="xml"
+			)
+	}
+}
+GROUP BY ?work
+LIMIT 100000
+# OFFSET 1000

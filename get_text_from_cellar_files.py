@@ -81,6 +81,8 @@ def get_text(input_path, output_dir, replace_existing=False):
         # Remove unwanted return character in folder names.
         file_path = file_path.replace('\n', '')
 
+        file_path = file_path.replace('\\', '/')
+
         # Get full file name with extension
         file = file_path.split('/')[-1]
 
@@ -133,18 +135,18 @@ def get_text(input_path, output_dir, replace_existing=False):
                 os.makedirs(os.path.dirname(output_dir), exist_ok=True)
 
                 # Open output file for writing
-                with open(out_file_path, 'w+') as outfile:
+                with open(out_file_path, 'w+', encoding="utf-8") as outfile:
                     # Write the text to the output file
                     outfile.write(text)
 
 if __name__ == '__main__':
 
     # Specify input dir name
-    input_path = "/Users/seljaseppala/Dropbox/Documents/Programmes/regdef_corpus/corpus_compiler_testing/cellar_files_testing/"
+    input_path = r"D:\data\2020_moral\cellar_files_20250430-170114/"
     # input_path = "/Users/seljaseppala/Git/eu_corpus_compiler/data/cellar_files_20201216-124636/"
 
     # Specify path for output text files
-    output_dir = '/Users/seljaseppala/Dropbox/Documents/Programmes/regdef_corpus/corpus_compiler_testing/text_files_testing_new/'
+    output_dir = r"D:\data\2020_moral\text_files_20250430-170114/"
     # output_dir = '/Users/seljaseppala/Git/eu_corpus_compiler/data/text_files_20201216-124636/'
 
     # Get the text

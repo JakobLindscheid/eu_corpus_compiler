@@ -10,6 +10,7 @@ The program also has a function to return a list of CELLAR ids
 from a CSV file that contains a set of information about each document.
 """
 import os
+import time
 
 import pandas as pd
 from datetime import datetime
@@ -32,6 +33,7 @@ def get_cellar_info_from_endpoint(sparql_query):
 
     ## USING SPARQLWrapper
     sparql = SPARQLWrapper(endpoint)
+    sparql.setTimeout(300)
 
     sparql.setQuery(sparql_query)
 
@@ -39,7 +41,9 @@ def get_cellar_info_from_endpoint(sparql_query):
 
     sparql.setReturnFormat(JSON)
 
+    start_time = time.time()
     results = sparql.query().convert()
+    print('SPARQL query execution time:', time.time() - start_time)
     # print('RESULTS:', results)
 
     return results

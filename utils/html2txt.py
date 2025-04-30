@@ -50,7 +50,7 @@ def html2txt_path_eu(file_path):
     :return: str
     """
 
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding="utf-8") as file:
         text = ' '.join(file.readlines())
         output_text = html2txt_str_eu(text)
 
@@ -69,6 +69,9 @@ def html2txt_str_eu(string):
     # Get text str from html str
     html_str = BeautifulSoup(string, features="lxml")
 
+    for footnote in html_str.html.find_all("span","FootnoteReference"):
+        footnote.replace_with(f" (Footnote {footnote.get_text(strip=True)})")
+
     raw_str_list = []
     for tag in html_str.html.find_all():
 
@@ -81,7 +84,7 @@ def html2txt_str_eu(string):
         # If tag is p and p is not in a table and has no other p descendents
         elif tag.name == 'p' and 'table' not in [tab.name for tab in tag.parents] and tag.p == None:
             # print('TAG_P_is_None:', tag.p == None)
-            raw_str_list.append(tag.get_text(separator=" "))
+            raw_str_list.append(tag.get_text(separator=""))
             # print('P_TXT:', tag.get_text(separator=" "))
     # print('RAW_STR_LIST:', raw_str_list)
 
@@ -119,7 +122,11 @@ def table2txt(table):
         columns = table_row.find_all('td', recursive=False)
 
         for column in columns:
-            output_rows_list.append(column.find_next("p").text.strip())
+            p_tag = column.find_next("p")
+            if p_tag:
+                output_rows_list.append(column.find_next("p").text)
+            else:
+                output_rows_list.append("")
 
     text_str = ' '.join(output_rows_list)
     # print('DATA:', text_str)
@@ -173,7 +180,7 @@ def clean_up_str(raw_str):
     restored_lines = re.sub(restore_lines, '\0 ', stripped_str)
 
     # Replace multiple spaces with a single space
-    clean_up_spaces = re.compile(r'\s{2,}')
+    clean_up_spaces = re.compile(r'[^\S\r\n]{2,}')
     clean_str = re.sub(clean_up_spaces, ' ', restored_lines)
 
     return clean_str
