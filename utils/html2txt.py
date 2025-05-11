@@ -122,9 +122,12 @@ def table2txt(table):
         columns = table_row.find_all('td', recursive=False)
 
         for column in columns:
-            p_tag = column.find_next("p")
+            p_tag = column.find("p")
+            span_tag = column.find("span")
             if p_tag:
-                output_rows_list.append(column.find_next("p").text)
+                output_rows_list.append(p_tag.text)
+            elif span_tag:
+                output_rows_list.append(span_tag.text)
             else:
                 output_rows_list.append("")
 
