@@ -33,7 +33,7 @@ def get_cellar_info_from_endpoint(sparql_query):
 
     ## USING SPARQLWrapper
     sparql = SPARQLWrapper(endpoint)
-    sparql.setTimeout(300)
+    sparql.setTimeout(600)
 
     sparql.setQuery(sparql_query)
 

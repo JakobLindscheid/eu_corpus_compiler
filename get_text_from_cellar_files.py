@@ -33,7 +33,7 @@ from utils.xml2txt import xml2txt_bs4_eu
 
 sys.path.append("..")
 
-def get_text(input_path, output_dir, replace_existing=False):
+def get_text(input_path, output_dir, replace_existing=False, progress_bar=True):
     """
     Get the text from the XML and HTML files
     downloaded from the EU CELLAR server, clean it up,
@@ -70,13 +70,15 @@ def get_text(input_path, output_dir, replace_existing=False):
     # print('EXISTING_TXT_FILES:', existing_txt_files_list)
 
     # Display processed file and progress bar
-    pbar = tqdm(total=len(file_list), desc='{desc}')
+    if progress_bar:
+        pbar = tqdm(total=len(file_list), desc='{desc}')
 
     # Process XML and HTML files in file_list
     for file_path in file_list:
 
         # Display processed file
-        pbar.update(1)
+        if progress_bar:
+            pbar.update(1)
 
         # Remove unwanted return character in folder names.
         file_path = file_path.replace('\n', '')
@@ -116,12 +118,14 @@ def get_text(input_path, output_dir, replace_existing=False):
 
             # Get text from XML file
             if extension == 'xml' and '.doc.' not in file_path and '.toc.' not in file_path:
-                pbar.set_description_str(f'Processing file: <XML> {cellar_id}/{file}', refresh=True)
+                if progress_bar:
+                    pbar.set_description_str(f'Processing file: <XML> {cellar_id}/{file}', refresh=True)
                 text = xml2txt_bs4_eu(file_path)
 
             # Get text from HTML file
             elif extension == 'html':
-                pbar.set_description_str(f'Processing file: <HTML> {cellar_id}/{file}', refresh=True)
+                if progress_bar:
+                    pbar.set_description_str(f'Processing file: <HTML> {cellar_id}/{file}', refresh=True)
                 text = html2txt_path_eu(file_path)
 
             # print(text[:200])
@@ -141,13 +145,24 @@ def get_text(input_path, output_dir, replace_existing=False):
 
 if __name__ == '__main__':
 
+    input_dirs = [d for d in os.listdir(r"D:\data") if 'documents' not in d]
+    
     # Specify input dir name
-    input_path = r"D:\data\2020_moral\cellar_files_20250430-170114/"
+    # input_path = r"D:\data\2020_moral\cellar_files_20250430-170114/"
     # input_path = "/Users/seljaseppala/Git/eu_corpus_compiler/data/cellar_files_20201216-124636/"
 
     # Specify path for output text files
-    output_dir = r"D:\data\2020_moral\text_files_20250430-170114/"
+    # output_dir = r"D:\data\2020_moral\text_files_20250430-170114/"
     # output_dir = '/Users/seljaseppala/Git/eu_corpus_compiler/data/text_files_20201216-124636/'
-
-    # Get the text
-    get_text(input_path, output_dir, replace_existing=True)
+    from joblib import Parallel, delayed
+    def process_directory(directory):
+        paths = os.listdir(f"D:/data/{directory}")
+        for path in paths:
+            if "cellar_files" in path:
+                input_path = f"D:/data/{directory}/{path}/"
+            elif "text_files" in path:
+                output_dir = f"D:/data/{directory}/{path}/"
+        # Get the text
+        get_text(input_path, output_dir, replace_existing=True, progress_bar=False)
+    
+    Parallel(n_jobs=12)(delayed(process_directory)(directory) for directory in tqdm(input_dirs))

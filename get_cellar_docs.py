@@ -158,76 +158,78 @@ def process_range(sub_list, folder_path, index=0):
 
 # Program starts here
 # ===================
-query_decade = 2020
-moral_query = 'moral'
-timestamp = str(datetime.now().strftime("%Y%m%d-%H%M%S"))
+moral_query = 'nonmoral'
+for query_year in range(2025, 1950, -1):
+    timestamp = str(datetime.now().strftime("%Y%m%d-%H%M%S"))
 
-# Get SPARQL query from given file
-sparql_query = text_to_str(f'queries/sparql_queries/sparql_{moral_query}_documents.rq')
-sparql_query = sparql_query.replace('decade0', str(query_decade)).replace('decade1', str(query_decade + 10))
-# print('SPARQL_PATH:', sparql_query)
+    # Get SPARQL query from given file
+    sparql_query = text_to_str(f'queries/sparql_queries/sparql_{moral_query}_documents.rq')
+    sparql_query = sparql_query.replace('decade0', str(query_year)).replace('decade1', str(query_year + 1))
+    # print('SPARQL_PATH:', sparql_query)
 
-# Get CELLAR information from EU SPARQL endpoint (in JSON format)
-print("Getting CELLAR information from SPARQL endpoint...")
-sparql_query_results = get_cellar_info_from_endpoint(sparql_query)
-print('SPARQL_QUERY_RESULTS:', len(sparql_query_results["results"]["bindings"]))
+    # Get CELLAR information from EU SPARQL endpoint (in JSON format)
+    print("Getting CELLAR information from SPARQL endpoint...")
+    sparql_query_results = get_cellar_info_from_endpoint(sparql_query)
+    print('SPARQL_QUERY_RESULTS:', len(sparql_query_results["results"]["bindings"]))
+    if len(sparql_query_results["results"]["bindings"]) == 0:
+        raise ValueError(f"No results found for the year: {query_year}")
 
-# Output SPARQL results to file
-sparql_query_results_dir = "queries/sparql_query_results/"
-os.makedirs(os.path.dirname(sparql_query_results_dir), exist_ok=True)
-sparql_query_results_file = sparql_query_results_dir + f"query_results_{query_decade}_{moral_query}" + timestamp + ".json"
-to_json_output_file(sparql_query_results_file, sparql_query_results)
+    # Output SPARQL results to file
+    sparql_query_results_dir = "queries/sparql_query_results/"
+    os.makedirs(os.path.dirname(sparql_query_results_dir), exist_ok=True)
+    sparql_query_results_file = sparql_query_results_dir + f"query_results_{query_year}_{moral_query}" + timestamp + ".json"
+    to_json_output_file(sparql_query_results_file, sparql_query_results)
 
-# Create a list of ids from the SPARQL query results (in JSON format)
-id_list = sorted(get_cellar_ids_from_json_results(sparql_query_results))
-# print('ID_LIST:', len(id_list), id_list[:10])
+    # Create a list of ids from the SPARQL query results (in JSON format)
+    id_list = sorted(get_cellar_ids_from_json_results(sparql_query_results))
+    # print('ID_LIST:', len(id_list), id_list[:10])
 
-# # ALTERNATIVELY
-# # If you already have a CSV file with cellar ids,
-# # e.g., copy-pasted from browser results,
-# # specify file (path) containing the cellar IDs
-# # Input format: cellarURIs,lang,mtypes,workTypes,subjects,subject_ids
-# cellar_ids_file = 'queries/sparql_query_results/query_results_2019-01-07.csv'
-# #
-# # Create a list of CELLAR ids from the given CSV file
-# id_list = get_cellar_ids_from_csv_file(cellar_ids_file)
+    # # ALTERNATIVELY
+    # # If you already have a CSV file with cellar ids,
+    # # e.g., copy-pasted from browser results,
+    # # specify file (path) containing the cellar IDs
+    # # Input format: cellarURIs,lang,mtypes,workTypes,subjects,subject_ids
+    # cellar_ids_file = 'queries/sparql_query_results/query_results_2019-01-07.csv'
+    # #
+    # # Create a list of CELLAR ids from the given CSV file
+    # id_list = get_cellar_ids_from_csv_file(cellar_ids_file)
 
-# Output retrieved CELLAR ids list to txt file
-# with each ID on a new line
-cellar_ids_to_file(id_list, timestamp)
+    # Output retrieved CELLAR ids list to txt file
+    # with each ID on a new line
+    cellar_ids_to_file(id_list, timestamp)
 
-# Create a list of not-yet-downloaded file ids by comparing the results in id_list with files present in the given directory
-# dir_to_check = None
-dir_to_check = "data/cellar_files_20201214-165041/"
-# dir_to_check = "dir_with_previously_downloaded_files/"
-if dir_to_check and os.path.exists(dir_to_check):
-    id_list = check_ids_to_download(id_list, dir_to_check)
-    # print('NEW_FILES_TO_DOWNLOAD:', len(id_list))
+    # Create a list of not-yet-downloaded file ids by comparing the results in id_list with files present in the given directory
+    # dir_to_check = None
+    dir_to_check = "data/cellar_files_20201214-165041/"
+    # dir_to_check = "dir_with_previously_downloaded_files/"
+    if dir_to_check and os.path.exists(dir_to_check):
+        id_list = check_ids_to_download(id_list, dir_to_check)
+        # print('NEW_FILES_TO_DOWNLOAD:', len(id_list))
 
-# Specify folder path to store downloaded files
-dwnld_folder_path = f"D:/data/{query_decade}_{moral_query}/cellar_files_" + timestamp + "/"
+    # Specify folder path to store downloaded files
+    dwnld_folder_path = f"D:/data/{query_year}_{moral_query}/cellar_files_" + timestamp + "/"
 
-# Run multiple threads in parallel to download the files
-# using the process_range(sub_list, dwnld_folder_path) function
-# Adapted from: https://stackoverflow.com/questions/16982569/making-multiple-api-calls-in-parallel-using-python-ipython
-nthreads = 11
-threads = []
-for i in range(nthreads):  # Four times...
-    # print('ID_LIST:', id_list[i::nthreads])
-    sub_list = id_list[i::nthreads]
-    t = Thread(target=process_range, args=(sub_list, dwnld_folder_path, i))
-    threads.append(t)
+    # Run multiple threads in parallel to download the files
+    # using the process_range(sub_list, dwnld_folder_path) function
+    # Adapted from: https://stackoverflow.com/questions/16982569/making-multiple-api-calls-in-parallel-using-python-ipython
+    nthreads = 11
+    threads = []
+    for i in range(nthreads):  # Four times...
+        # print('ID_LIST:', id_list[i::nthreads])
+        sub_list = id_list[i::nthreads]
+        t = Thread(target=process_range, args=(sub_list, dwnld_folder_path, i))
+        threads.append(t)
 
-# start the threads
-[t.start() for t in threads]
-# wait for the threads to finish
-[t.join() for t in threads]
+    # start the threads
+    [t.start() for t in threads]
+    # wait for the threads to finish
+    [t.join() for t in threads]
 
 
-# Generate text files for downloaded XML and HTML files
-# Set replace_existing to True to replace existing text files.
-# To process only new files, set replace_existing to False (default).
-# Usage: get_text(input_path, output_dir, replace_existing=False)
-txt_folder_path = f"D:/data/{query_decade}_{moral_query}/text_files_" + dwnld_folder_path.split('_')[-1]
-# print('TXT_DIR_PATH:', txt_folder_path)
-get_text(dwnld_folder_path, txt_folder_path, replace_existing=False)
+    # Generate text files for downloaded XML and HTML files
+    # Set replace_existing to True to replace existing text files.
+    # To process only new files, set replace_existing to False (default).
+    # Usage: get_text(input_path, output_dir, replace_existing=False)
+    txt_folder_path = f"D:/data/{query_year}_{moral_query}/text_files_" + dwnld_folder_path.split('_')[-1]
+    # print('TXT_DIR_PATH:', txt_folder_path)
+    get_text(dwnld_folder_path, txt_folder_path, replace_existing=False)
