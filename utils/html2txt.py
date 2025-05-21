@@ -5,6 +5,7 @@
 
 import re
 from bs4 import BeautifulSoup
+import copy
 import sys
 sys.path.append("..")
 
@@ -84,7 +85,9 @@ def html2txt_str_eu(string):
         # If tag is p and p is not in a table and has no other p descendents
         elif tag.name == 'p' and 'table' not in [tab.name for tab in tag.parents] and tag.p == None:
             # print('TAG_P_is_None:', tag.p == None)
-            raw_str_list.append(tag.get_text(separator=""))
+            raw_str_list.append(
+                re.sub(r"\n+", " ", tag.get_text(separator=""))
+            )
             # print('P_TXT:', tag.get_text(separator=" "))
     # print('RAW_STR_LIST:', raw_str_list)
 
@@ -116,6 +119,10 @@ def table2txt(table):
     :param table: str
     :return: str
     """
+
+    table = copy.copy(table)
+    for child_table in table.find_all("table"):
+        child_table.decompose()
     output_rows_list = []
 
     for table_row in table.find_all('tr'):
