@@ -172,3 +172,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+documents/*
+*csv
+cellar_ids/*
+id_logs/*
+queries/sparql_query_results/*
