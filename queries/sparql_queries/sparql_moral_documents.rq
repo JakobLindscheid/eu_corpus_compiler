@@ -15,6 +15,7 @@ DISTINCT
 (GROUP_CONCAT(distinct ?subjectLabel;separator="|") as ?subjects)
 (GROUP_CONCAT(distinct ?subject;separator="|") as ?subject_ids)
 (GROUP_CONCAT(distinct ?mtype;separator="|") as ?file_types)
+(GROUP_CONCAT(distinct ?date;separator="|") as ?dates)
 
 WHERE 
 {
